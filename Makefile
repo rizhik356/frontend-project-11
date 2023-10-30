@@ -4,5 +4,9 @@ install:
 lint:
 	npx eslint .
 
-test-coverage:
-	npm test -- --coverage --coverageProvider=v8
+develop:
+	npx webpack serve
+
+build:
+	rm -rf dist
+	NODE_ENV=production npx webpack
