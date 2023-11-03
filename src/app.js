@@ -29,6 +29,9 @@ const app = () => {
       case 'inputUrlForm.feeds':
         render(watchedState, elements);
         break;
+      case 'errors':
+        render(watchedState, elements);
+        break;
       default:
         throw new Error(`Invalid path : ${path}`);
     }
@@ -36,7 +39,7 @@ const app = () => {
 
   let schema = yup.string()
     .required()
-    .url()
+    .url('Ссылка должна быть валидным URL')
     .notOneOf([]);
 
   const validation = (url) => {
@@ -46,12 +49,13 @@ const app = () => {
         watchedState.inputUrlForm.feeds.push(url);
         schema = yup.string()
           .required()
-          .url()
-          .notOneOf(watchedState.inputUrlForm.feeds);
+          .url('Ссылка должна быть валидным URL')
+          .notOneOf(watchedState.inputUrlForm.feeds, 'RSS уже существует');
       })
-      .catch(() => {
+      .catch((err) => {
         watchedState.inputUrlForm.state = 'invalid';
-        // console.log('Email has been aufizerzein');
+        watchedState.errors = [];
+        watchedState.errors.push(err.errors);
       });
   };
 
