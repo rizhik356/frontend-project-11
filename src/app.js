@@ -3,7 +3,6 @@ import * as yup from 'yup';
 import onChange from 'on-change';
 import render from './view';
 
-console.log('app');
 const app = () => {
   const elements = {
     formInput: document.querySelector('#rssInput'),
@@ -19,11 +18,6 @@ const app = () => {
     errors: [],
   };
 
-  const schema = yup.string()
-    .required()
-    .url()
-    .notOneOf(['1', '2']);
-
   const watchedState = onChange(state, (path) => {
     switch (path) {
       case 'inputUrlForm.inputValue':
@@ -32,16 +26,28 @@ const app = () => {
       case 'inputUrlForm.state':
         render(watchedState, elements);
         break;
+      case 'inputUrlForm.feeds':
+        render(watchedState, elements);
+        break;
       default:
         throw new Error(`Invalid path : ${path}`);
     }
   });
 
+  let schema = yup.string()
+    .required()
+    .url()
+    .notOneOf([]);
+
   const validation = (url) => {
     schema.validate(url)
       .then(() => {
         watchedState.inputUrlForm.state = 'valid';
-        // console.log('ok');
+        watchedState.inputUrlForm.feeds.push(url);
+        schema = yup.string()
+          .required()
+          .url()
+          .notOneOf(watchedState.inputUrlForm.feeds);
       })
       .catch(() => {
         watchedState.inputUrlForm.state = 'invalid';

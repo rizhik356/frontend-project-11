@@ -6,18 +6,22 @@
         <title>Webpack App</title>
     </head>
     <body>
-        <div class="container">
+        <div class="container-fluid bg-dark ">
             <div class="row">
-                <form action class="d-flex justify-content-center rss-form text-body mt-4">
-                    <div class="form-floating col-6">
+                <div class="col-lg-8 mx-auto">
+                <form action class="d-flex rss-form text-body mt-5">
+                    <div class="form-floating col-lg-8">
                         <input autofocus required name="url" class="form-control" id="rssInput" aria-label="url" placeholder="Ссылка RSS">
                         <label for="rssInput">Ссылка RSS</label>
                       </div>
-                      <div class="col-3 d-flex justify-content-center">
+                      <div class="col-lg d-flex justify-content-end">
                         <button type="submit" class="btn btn-primary btn-lg px-sm-5 h-100">Добавить</button>
                       </div>
                   </form>
+                  <p class="mt-2 text-white mb-0">Пример: https://ru.hexlet.io/lessons.rss</p>
+                  <p class="feedback small text-danger"></p>
             </div>
+        </div>
         </div>
     </body>
     
