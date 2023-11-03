@@ -1,8 +1,9 @@
 import 'bootstrap';
 import * as yup from 'yup';
 import onChange from 'on-change';
-import render from './view.js';
+import render from './view';
 
+console.log('app');
 const app = () => {
   const elements = {
     formInput: document.querySelector('#rssInput'),
