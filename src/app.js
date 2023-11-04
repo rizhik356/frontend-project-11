@@ -1,7 +1,32 @@
 import 'bootstrap';
 import * as yup from 'yup';
 import onChange from 'on-change';
+import i18next from 'i18next';
+import { setLocale } from 'yup';
 import render from './view';
+
+const i18nextInstance = i18next.createInstance();
+i18nextInstance.init({
+  lng: 'ru',
+  debug: true,
+  resources: {
+    ru: {
+      translation: {
+        messages: {
+          errors: {
+            invalidUrl: 'Ссылка должна быть валидным URL',
+            copyFeed: 'RSS уже существует',
+          },
+          status: 'RSS успешно загружен',
+        },
+        state: {
+          valid: 'valid',
+          invalid: 'invalid',
+        },
+      },
+    },
+  },
+});
 
 const app = () => {
   const elements = {
@@ -16,6 +41,7 @@ const app = () => {
       feeds: [],
     },
     errors: [],
+    status: i18nextInstance.t('messages.status'),
   };
 
   const watchedState = onChange(state, (path) => {
@@ -37,23 +63,35 @@ const app = () => {
     }
   });
 
-  let schema = yup.string()
-    .required()
-    .url('Ссылка должна быть валидным URL')
-    .notOneOf([]);
+  setLocale({
+    mixed: {
+      notOneOf: i18nextInstance.t('messages.errors.copyFeed'),
+    },
+    string: {
+      url: i18nextInstance.t('messages.errors.invalidUrl'),
+    },
+  });
+  let schema = yup.object().shape({
+    url: yup.string()
+      .required()
+      .url()
+      .notOneOf([]),
+  });
 
   const validation = (url) => {
-    schema.validate(url)
+    schema.validate({ url })
       .then(() => {
-        watchedState.inputUrlForm.state = 'valid';
+        watchedState.inputUrlForm.state = i18nextInstance.t('state.valid');
         watchedState.inputUrlForm.feeds.push(url);
-        schema = yup.string()
-          .required()
-          .url('Ссылка должна быть валидным URL')
-          .notOneOf(watchedState.inputUrlForm.feeds, 'RSS уже существует');
+        schema = yup.object().shape({
+          url: yup.string()
+            .required()
+            .url()
+            .notOneOf(watchedState.inputUrlForm.feeds),
+        });
       })
       .catch((err) => {
-        watchedState.inputUrlForm.state = 'invalid';
+        watchedState.inputUrlForm.state = i18nextInstance.t('state.invalid');
         watchedState.errors = [];
         watchedState.errors.push(err.errors);
       });
