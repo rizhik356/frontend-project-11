@@ -3,29 +3,15 @@ import * as yup from 'yup';
 import onChange from 'on-change';
 import i18next from 'i18next';
 import { setLocale } from 'yup';
+import axios from 'axios';
 import render from './view';
+import resources from './locales/index';
 
 const i18nextInstance = i18next.createInstance();
 i18nextInstance.init({
   lng: 'ru',
   debug: true,
-  resources: {
-    ru: {
-      translation: {
-        messages: {
-          errors: {
-            invalidUrl: 'Ссылка должна быть валидным URL',
-            copyFeed: 'RSS уже существует',
-          },
-          status: 'RSS успешно загружен',
-        },
-        state: {
-          valid: 'valid',
-          invalid: 'invalid',
-        },
-      },
-    },
-  },
+  resources,
 });
 
 const app = () => {
@@ -103,6 +89,18 @@ const app = () => {
     const data = formData.get('url');
     validation(data);
     watchedState.inputUrlForm.inputValue = data;
+    axios.get(data)
+      .then((response) => {
+        console.log(`${response} - Ola-la`);
+      })
+      .catch((error) => {
+        // handle error
+        console.log(error);
+        console.log(data);
+      })
+      .finally(() => {
+        // always executed
+      });
   });
 };
 export default app;
