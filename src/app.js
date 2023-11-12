@@ -99,13 +99,13 @@ const app = () => {
       watchedState.errors = [];
       watchedState.errors.push(err.errors);
       watchedState.inputUrlForm.state = 'invalid';
-      return err.errors;
+      throw new Error(err.errors);
     });
   const stringParseToHTML = (str) => {
     const parse = new DOMParser();
-    return parse.parseFromString(str, 'text/html');
+    return parse.parseFromString(str, 'text/xml');
   };
-  const parseHTMLtoData = (html) => {
+  const parseHTMLtoData = (html, data) => {
     const HTMLData = {
       feed: {},
       rss: [],
@@ -118,13 +118,16 @@ const app = () => {
       HTMLData.feed.feedTitle = html.querySelector('title').textContent;
       HTMLData.feed.feedDescription = html.querySelector('description').textContent;
       HTMLData.feed.id = watchedState.active.activeId;
+      HTMLData.feed.link = data;
+
       const HTMLItem = html.querySelectorAll('item');
       HTMLItem.forEach((item) => {
         watchedState.active.localId += 1;
         const itemTitle = item.querySelector('title').textContent;
         const itemDescription = item.querySelector('description').textContent;
-        const itemLink = item.querySelector('link').nextSibling.textContent;
-        HTMLData.rss.push({
+        const itemLink = item.querySelector('link').textContent;
+
+        HTMLData.rss.unshift({
           itemTitle,
           itemDescription,
           itemLink,
@@ -138,19 +141,54 @@ const app = () => {
     }
   };
 
-  const getHTML = (data) => {
-    axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(data)}`)
+  const updateRSS = (link) => {
+    watchedState.inputUrlForm.state = 'beginUpdating';
+    axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(link)}`)
       .then((response) => stringParseToHTML(response.data.contents))
-      .then((html) => parseHTMLtoData(html))
-      .catch((err) => {
-        watchedState.errors.push(i18nextInstance.t('messages.errors.networkError'));
-        watchedState.inputUrlForm.state = 'invalid';
-        console.log(err);
-      });
-    /* .finally(() => setTimeout(() => {
-        getHTML();
-      }, 1000)); */
+      .then((html) => {
+        Promise.resolve([])
+          .then(() => watchedState.active.feed.find((feed) => feed.link === link))
+          .then((feed) => watchedState.active.rss.filter((post) => post.id === feed.id))
+          .then((posts) => {
+            const HTMLItem = Array.from(html.querySelectorAll('item'));
+            const filter = HTMLItem.filter((item) => {
+              const itemTitle = item.querySelector('title').textContent;
+              const postsTitle = posts.map((post) => post.itemTitle);
+              return !postsTitle.includes(itemTitle);
+            });
+            if (filter.length > 0) {
+              filter.reverse().forEach((item) => {
+                const itemTitle = item.querySelector('title').textContent;
+                const itemDescription = item.querySelector('description').textContent;
+                const itemLink = item.querySelector('link').nextSibling.textContent;
+                const filterData = {
+                  itemTitle,
+                  itemDescription,
+                  itemLink,
+                  id: watchedState.active.activeId,
+                  localId: watchedState.active.localId,
+                };
+                watchedState.active.rss.push(filterData);
+              });
+              watchedState.inputUrlForm.state = 'updating';
+            }
+            return filter;
+          });
+      })
+      .then(() => setTimeout(updateRSS, 3000, link));
   };
+
+  const getHTML = (data) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(data)}`)
+    .then((response) => stringParseToHTML(response.data.contents))
+    .then((html) => parseHTMLtoData(html, data))
+    .catch((err) => {
+      watchedState.errors.push(i18nextInstance.t('messages.errors.networkError'));
+      watchedState.inputUrlForm.state = 'invalid';
+      console.log(err);
+    })
+    .finally(() => setTimeout(() => {
+      updateRSS(data);
+    }, 3000));
 
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -160,7 +198,9 @@ const app = () => {
     const data = formData.get('url');
     validation(data)
       .then((newData) => getHTML(newData))
-      .then(() => watchedState.inputUrlForm.state === 'done');
+      .catch((err) => err);
   });
 };
 export default app;
+
+// http://lorem-rss.herokuapp.com/feed?unit=second

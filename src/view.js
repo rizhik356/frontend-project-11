@@ -33,8 +33,8 @@ const render = (state, elements) => {
     `;
       ul.prepend(li);
     });
-
     divFeeds.append(ul);
+
     const posts = document.querySelector('.posts');
     const divPosts = posts.querySelector('.card') ?? document.createElement('div');
     divPosts.classList.add('border-0', 'card');
@@ -64,6 +64,21 @@ const render = (state, elements) => {
     feedback.classList.add('text-success');
     feedback.innerHTML = state.status;
     elements.form.reset();
+  } else if (state.inputUrlForm.state === 'updating') {
+    const posts = document.querySelector('.posts');
+    const ul = posts.querySelector('ul');
+    ul.innerHTML = '';
+    state.active.rss.forEach(({
+      itemTitle, itemLink, localId,
+    }) => {
+      const liPost = document.createElement('li');
+      liPost.classList.add('justify-content-between', 'list-group-item', 'd-flex', 'align-items-start', 'border-0');
+      liPost.innerHTML = `
+                        <a href="${itemLink}" class="text-decoration-none fw-normal text-dark" data-id="${localId}">${itemTitle}</a>
+                        <button type="button" class="btn btn-secondary" data-id="${localId}">Просмотр</button>               
+      `;
+      ul.prepend(liPost);
+    });
   }
 };
 
