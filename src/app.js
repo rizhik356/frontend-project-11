@@ -30,7 +30,7 @@ const app = () => {
     status: i18nextInstance.t('messages.status'),
     active: {
       activeId: 0,
-      feed: {},
+      feed: [],
       rss: [],
       localId: 0,
     },
@@ -39,28 +39,28 @@ const app = () => {
   const watchedState = onChange(state, (path) => {
     switch (path) {
       case 'inputUrlForm.inputValue':
-        render(watchedState, elements);
+
         break;
       case 'inputUrlForm.state':
         render(watchedState, elements);
         break;
       case 'inputUrlForm.feeds':
-        render(watchedState, elements);
+      //  render(watchedState, elements);
         break;
       case 'errors':
-        render(watchedState, elements);
+      //  render(watchedState, elements);
         break;
       case 'active.activeId':
-        render(watchedState, elements);
+      //  render(watchedState, elements);
         break;
       case 'active.feed':
-        render(watchedState, elements);
+      //  render(watchedState, elements);
         break;
       case 'active.rss':
-        render(watchedState, elements);
+      //  render(watchedState, elements);
         break;
       case 'active.localId':
-        render(watchedState, elements);
+      //  render(watchedState, elements);
         break;
       default:
         throw new Error(`Invalid path : ${path}`);
@@ -82,24 +82,25 @@ const app = () => {
       .notOneOf([]),
   });
 
-  const validation = (url) => {
-    schema.validate({ url })
-      .then(() => {
-        watchedState.inputUrlForm.state = 'valid';
-        watchedState.inputUrlForm.feeds.push(url);
-        schema = yup.object().shape({
-          url: yup.string()
-            .required()
-            .url()
-            .notOneOf(watchedState.inputUrlForm.feeds),
-        });
-      })
-      .catch((err) => {
-        watchedState.inputUrlForm.state = 'invalid';
-        watchedState.errors = [];
-        watchedState.errors.push(err.errors);
+  const validation = (url) => schema.validate({ url })
+    .then(() => {
+      watchedState.inputUrlForm.state = 'valid';
+      watchedState.inputUrlForm.feeds.push(url);
+      schema = yup.object().shape({
+        url: yup.string()
+          .required()
+          .url()
+          .notOneOf(watchedState.inputUrlForm.feeds),
       });
-  };
+      watchedState.errors = [];
+      return url;
+    })
+    .catch((err) => {
+      watchedState.errors = [];
+      watchedState.errors.push(err.errors);
+      watchedState.inputUrlForm.state = 'invalid';
+      return err.errors;
+    });
   const stringParseToHTML = (str) => {
     const parse = new DOMParser();
     return parse.parseFromString(str, 'text/html');
@@ -122,7 +123,7 @@ const app = () => {
         watchedState.active.localId += 1;
         const itemTitle = item.querySelector('title').textContent;
         const itemDescription = item.querySelector('description').textContent;
-        const itemLink = item.querySelector('link').nextSibling;
+        const itemLink = item.querySelector('link').nextSibling.textContent;
         HTMLData.rss.push({
           itemTitle,
           itemDescription,
@@ -131,8 +132,8 @@ const app = () => {
           localId: watchedState.active.localId,
         });
       });
-      watchedState.active.feed = HTMLData.feed;
-      watchedState.active.rss = HTMLData.rss;
+      watchedState.active.feed.push(HTMLData.feed);
+      watchedState.active.rss = [...watchedState.active.rss, ...HTMLData.rss];
       watchedState.inputUrlForm.state = 'parseComplete';
     }
   };
@@ -142,24 +143,24 @@ const app = () => {
       .then((response) => stringParseToHTML(response.data.contents))
       .then((html) => parseHTMLtoData(html))
       .catch((err) => {
-        watchedState.inputUrlForm.state = 'invalid';
         watchedState.errors.push(i18nextInstance.t('messages.errors.networkError'));
+        watchedState.inputUrlForm.state = 'invalid';
         console.log(err);
       });
-    /* .finally(() => {
-        const timer = setTimeout(getHTML, 5000, data);
-        return watchedState.inputUrlForm.inputValue === data ? timer : clearTimeout(timer);
-      }); */
+    /* .finally(() => setTimeout(() => {
+        getHTML();
+      }, 1000)); */
   };
 
   elements.form.addEventListener('submit', (e) => {
-    watchedState.inputUrlForm.state = 'feeding';
     e.preventDefault();
+    watchedState.inputUrlForm.state = 'feeding';
+    watchedState.inputUrlForm.state = [];
     const formData = new FormData(e.target);
     const data = formData.get('url');
-    validation(data);
-    watchedState.inputUrlForm.inputValue = data;
-    getHTML(data);
+    validation(data)
+      .then((newData) => getHTML(newData))
+      .then(() => watchedState.inputUrlForm.state === 'done');
   });
 };
 export default app;
