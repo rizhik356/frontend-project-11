@@ -20,6 +20,7 @@ const app = () => {
   const elements = {
     formInput: document.querySelector('#rssInput'),
     form: document.querySelector('.rss-form'),
+    posts: document.querySelector('.posts'),
   };
 
   const state = {
@@ -42,33 +43,8 @@ const app = () => {
   };
 
   const watchedState = onChange(state, (path) => {
-    switch (path) {
-      case 'inputUrlForm.inputValue':
-
-        break;
-      case 'inputUrlForm.state':
-        render(watchedState, elements);
-        break;
-      case 'inputUrlForm.feeds':
-      //  render(watchedState, elements);
-        break;
-      case 'errors':
-      //  render(watchedState, elements);
-        break;
-      case 'active.activeId':
-      //  render(watchedState, elements);
-        break;
-      case 'active.feed':
-      //  render(watchedState, elements);
-        break;
-      case 'active.rss':
-      //  render(watchedState, elements);
-        break;
-      case 'active.localId':
-      //  render(watchedState, elements);
-        break;
-      default:
-        throw new Error(`Invalid path : ${path}`);
+    if (path === 'inputUrlForm.state') {
+      render(state, elements);
     }
   });
 
@@ -89,7 +65,6 @@ const app = () => {
 
   const validation = (url) => schema.validate({ url })
     .then(() => {
-      watchedState.inputUrlForm.state = 'valid';
       watchedState.inputUrlForm.feeds.push(url);
       schema = yup.object().shape({
         url: yup.string()
@@ -140,6 +115,10 @@ const app = () => {
           id: watchedState.active.activeId,
           localId: watchedState.active.localId,
         });
+        watchedState.uiState.modal.push({
+          localId: watchedState.active.localId,
+          state: 'default',
+        });
       });
       watchedState.active.feed.push(HTMLData.feed);
       watchedState.active.rss = [...watchedState.active.rss, ...HTMLData.rss];
@@ -148,7 +127,6 @@ const app = () => {
   };
 
   const updateRSS = (link) => {
-    watchedState.inputUrlForm.state = 'beginUpdating';
     axios.get(allOrigins(link))
       .then((response) => stringParseToHTML(response.data.contents))
       .then((html) => {
@@ -173,6 +151,10 @@ const app = () => {
               localId: watchedState.active.localId,
             };
             watchedState.active.rss.push(filterData);
+            watchedState.uiState.modal.push({
+              localId: watchedState.active.localId,
+              state: 'default',
+            });
           });
           watchedState.inputUrlForm.state = 'updating';
         }
@@ -205,6 +187,12 @@ const app = () => {
         watchedState.inputUrlForm.state = 'invalid';
       });
   });
+  /* elements.posts.addEventListener('click', (e) => {
+    e.preventDefault();
+    const targetId = Number(e.target.dataset.id);
+    const findRssById = watchedState.uiState.modal.find((rssById) => rssById.localId === targetId);
+    findRssById.state = 'opened';
+  }); */
 };
 export default app;
 
