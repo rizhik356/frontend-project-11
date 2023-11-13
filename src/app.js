@@ -195,5 +195,3 @@ const app = () => {
   }); */
 };
 export default app;
-
-// http://lorem-rss.herokuapp.com/feed?unit=second
