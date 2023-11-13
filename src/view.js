@@ -1,3 +1,16 @@
+const renderLi = (ul, state) => {
+  state.active.rss.forEach(({
+    itemTitle, itemLink, localId,
+  }) => {
+    const liPost = document.createElement('li');
+    liPost.classList.add('justify-content-between', 'list-group-item', 'd-flex', 'align-items-start', 'border-0');
+    liPost.innerHTML = `
+                      <a href="${itemLink}" class="text-decoration-none fw-bold text-dark" data-id="${localId}">${itemTitle}</a>
+                      <button type="button" class="btn btn-secondary" data-id="${localId}" data-bs-toggle="modal" data-bs-target="#modal">Просмотр</button>               
+    `;
+    ul.prepend(liPost);
+  });
+};
 const render = (state, elements) => {
   const feedback = document.querySelector('.feedback');
   if (state.inputUrlForm.state === 'invalid') {
@@ -45,17 +58,7 @@ const render = (state, elements) => {
     const newUlPost = document.createElement('ul');
     newUlPost.classList.add('list-group');
     const ulPost = divPosts.querySelector('ul') ?? newUlPost;
-    state.active.rss.forEach(({
-      itemTitle, itemLink, localId,
-    }) => {
-      const liPost = document.createElement('li');
-      liPost.classList.add('justify-content-between', 'list-group-item', 'd-flex', 'align-items-start', 'border-0');
-      liPost.innerHTML = `
-                        <a href="${itemLink}" class="text-decoration-none fw-normal text-dark" data-id="${localId}">${itemTitle}</a>
-                        <button type="button" class="btn btn-secondary" data-id="${localId}">Просмотр</button>               
-      `;
-      ulPost.prepend(liPost);
-    });
+    renderLi(ulPost, state);
     divPosts.append(ulPost);
     posts.prepend(divPosts);
     elements.formInput.classList.remove('is-invalid');
@@ -68,17 +71,7 @@ const render = (state, elements) => {
     const posts = document.querySelector('.posts');
     const ul = posts.querySelector('ul');
     ul.innerHTML = '';
-    state.active.rss.forEach(({
-      itemTitle, itemLink, localId,
-    }) => {
-      const liPost = document.createElement('li');
-      liPost.classList.add('justify-content-between', 'list-group-item', 'd-flex', 'align-items-start', 'border-0');
-      liPost.innerHTML = `
-                        <a href="${itemLink}" class="text-decoration-none fw-normal text-dark" data-id="${localId}">${itemTitle}</a>
-                        <button type="button" class="btn btn-secondary" data-id="${localId}">Просмотр</button>               
-      `;
-      ul.prepend(liPost);
-    });
+    renderLi(ul, state);
   }
 };
 

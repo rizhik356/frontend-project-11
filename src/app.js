@@ -14,6 +14,8 @@ i18nextInstance.init({
   resources,
 });
 
+const allOrigins = (url) => `https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`;
+
 const app = () => {
   const elements = {
     formInput: document.querySelector('#rssInput'),
@@ -32,7 +34,10 @@ const app = () => {
       activeId: 0,
       feed: [],
       rss: [],
-      localId: 0,
+      localId: 1,
+    },
+    uiState: {
+      modal: [],
     },
   };
 
@@ -113,6 +118,7 @@ const app = () => {
     if (html.querySelector('rss') === null) {
       watchedState.errors.push(i18nextInstance.t('messages.errors.rssError'));
       watchedState.inputUrlForm.state = 'invalid';
+      throw new Error();
     } else {
       watchedState.active.activeId += 1;
       HTMLData.feed.feedTitle = html.querySelector('title').textContent;
@@ -143,52 +149,47 @@ const app = () => {
 
   const updateRSS = (link) => {
     watchedState.inputUrlForm.state = 'beginUpdating';
-    axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(link)}`)
+    axios.get(allOrigins(link))
       .then((response) => stringParseToHTML(response.data.contents))
       .then((html) => {
-        Promise.resolve([])
-          .then(() => watchedState.active.feed.find((feed) => feed.link === link))
-          .then((feed) => watchedState.active.rss.filter((post) => post.id === feed.id))
-          .then((posts) => {
-            const HTMLItem = Array.from(html.querySelectorAll('item'));
-            const filter = HTMLItem.filter((item) => {
-              const itemTitle = item.querySelector('title').textContent;
-              const postsTitle = posts.map((post) => post.itemTitle);
-              return !postsTitle.includes(itemTitle);
-            });
-            if (filter.length > 0) {
-              filter.reverse().forEach((item) => {
-                const itemTitle = item.querySelector('title').textContent;
-                const itemDescription = item.querySelector('description').textContent;
-                const itemLink = item.querySelector('link').nextSibling.textContent;
-                const filterData = {
-                  itemTitle,
-                  itemDescription,
-                  itemLink,
-                  id: watchedState.active.activeId,
-                  localId: watchedState.active.localId,
-                };
-                watchedState.active.rss.push(filterData);
-              });
-              watchedState.inputUrlForm.state = 'updating';
-            }
-            return filter;
+        const feedLink = watchedState.active.feed.find((feed) => feed.link === link);
+        const feedId = watchedState.active.rss.filter((post) => post.id === feedLink.id);
+        const HTMLItem = Array.from(html.querySelectorAll('item'));
+        const filter = HTMLItem.filter((item) => {
+          const itemTitle = item.querySelector('title').textContent;
+          const postsTitle = feedId.map((post) => post.itemTitle);
+          return !postsTitle.includes(itemTitle);
+        });
+        if (filter.length > 0) {
+          filter.reverse().forEach((item) => {
+            const itemTitle = item.querySelector('title').textContent;
+            const itemDescription = item.querySelector('description').textContent;
+            const itemLink = item.querySelector('link').textContent;
+            const filterData = {
+              itemTitle,
+              itemDescription,
+              itemLink,
+              id: watchedState.active.activeId,
+              localId: watchedState.active.localId,
+            };
+            watchedState.active.rss.push(filterData);
           });
+          watchedState.inputUrlForm.state = 'updating';
+        }
+        return filter;
       })
-      .then(() => setTimeout(updateRSS, 3000, link));
+      .catch((err) => {
+        console.log(err);
+      })
+      .finally(() => setTimeout(updateRSS, 1000, link));
   };
 
-  const getHTML = (data) => axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(data)}`)
+  const getHTML = (data) => axios.get(allOrigins(data))
     .then((response) => stringParseToHTML(response.data.contents))
     .then((html) => parseHTMLtoData(html, data))
     .catch((err) => {
-      watchedState.errors.push(i18nextInstance.t('messages.errors.networkError'));
-      watchedState.inputUrlForm.state = 'invalid';
-      console.log(err);
-    })
-    .finally(() => setTimeout(() => {
-      updateRSS(data);
-    }, 3000));
+      throw new Error(err);
+    });
 
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -198,7 +199,11 @@ const app = () => {
     const data = formData.get('url');
     validation(data)
       .then((newData) => getHTML(newData))
-      .catch((err) => err);
+      .then(() => updateRSS(data))
+      .catch(() => {
+        watchedState.errors.push(i18nextInstance.t('messages.errors.networkError'));
+        watchedState.inputUrlForm.state = 'invalid';
+      });
   });
 };
 export default app;
