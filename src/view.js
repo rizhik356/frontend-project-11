@@ -3,12 +3,11 @@ const renderLi = (ul, state) => {
     itemTitle, itemLink, localId,
   }) => {
     const uiStateById = (state.uiState.modal.find((item) => item.localId === localId)).state;
-    console.log(uiStateById);
-    const fontWeigth = uiStateById === 'default' ? 'fw-bold' : 'fw-normal';
+    const fontWeigth = uiStateById === 'default' ? 'fw-bold' : 'fw-normal text-secondary';
     const liPost = document.createElement('li');
     liPost.classList.add('justify-content-between', 'list-group-item', 'd-flex', 'align-items-start', 'border-0');
     liPost.innerHTML = `
-                      <a href="${itemLink}" target="_blank" class="text-decoration-none ${fontWeigth} text-dark" data-id="${localId}">${itemTitle}</a>
+                      <a href="${itemLink}" target="_blank" class="${fontWeigth}" data-id="${localId}">${itemTitle}</a>
                       <button type="button" class="btn btn-secondary" data-id="${localId}" data-bs-toggle="modal" data-bs-target="#modal">Просмотр</button>               
     `;
     ul.prepend(liPost);
@@ -110,7 +109,7 @@ const render = (state, elements) => (path, value) => {
       const openedId = propByPath.localId;
       const aById = document.querySelector(`a[data-id="${openedId}"]`);
       aById.classList.remove('fw-bold');
-      aById.classList.add('fw-normal');
+      aById.classList.add('fw-normal', 'text-secondary');
       const modaltitle = document.querySelector('.modal-title');
       const modalBody = document.querySelector('.modal-body');
       const ReadButton = document.querySelector('#read');
