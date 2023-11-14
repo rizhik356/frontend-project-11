@@ -21,6 +21,7 @@ const app = () => {
     formInput: document.querySelector('#rssInput'),
     form: document.querySelector('.rss-form'),
     posts: document.querySelector('.posts'),
+    feeds: document.querySelector('.feeds'),
   };
 
   const state = {

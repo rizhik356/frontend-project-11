@@ -41,8 +41,8 @@ const makeStatus = (stateStatus, state, elements) => {
       throw new Error(`Invalid status ${stateStatus}`);
   }
 };
-const parseFeeds = (state) => {
-  const feeds = document.querySelector('.feeds');
+const parseFeeds = (state, elements) => {
+  const { feeds } = elements;
   const divFeeds = feeds.querySelector('.card') ?? document.createElement('div');
   divFeeds.classList.add('border-0', 'card');
   divFeeds.innerHTML = `
@@ -65,9 +65,8 @@ const parseFeeds = (state) => {
   divFeeds.append(ul);
 };
 
-const parsePosts = (state) => {
-  parseFeeds(state);
-  const posts = document.querySelector('.posts');
+const parsePosts = (state, elements) => {
+  const { posts } = elements;
   const divPosts = posts.querySelector('.card') ?? document.createElement('div');
   divPosts.classList.add('border-0', 'card');
   divPosts.innerHTML = `
@@ -114,22 +113,20 @@ const render = (state, elements) => (path, value) => {
       makeStatus('feeding', state, elements);
       break;
     case 'parseComplete':
-      parseFeeds(state);
-      parsePosts(state);
+      parseFeeds(state, elements);
+      parsePosts(state, elements);
       makeStatus('success', state, elements);
       break;
 
     case 'updating': {
-      const posts = document.querySelector('.posts');
-      const ul = posts.querySelector('ul');
+      const ul = elements.posts.querySelector('ul');
       ul.innerHTML = '';
       renderLi(ul, state);
       break;
     }
     case 'opened': {
-      const id = getIdByPath(state, path);
-      makeOpened(id);
-      makeModal(state, id);
+      makeOpened(getIdByPath(state, path));
+      makeModal(state, getIdByPath(state, path));
       break;
     }
     default:
