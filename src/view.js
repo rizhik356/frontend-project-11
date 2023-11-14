@@ -2,10 +2,13 @@ const renderLi = (ul, state) => {
   state.active.rss.forEach(({
     itemTitle, itemLink, localId,
   }) => {
+    const uiStateById = (state.uiState.modal.find((item) => item.localId === localId)).state;
+    console.log(uiStateById);
+    const fontWeigth = uiStateById === 'default' ? 'fw-bold' : 'fw-normal';
     const liPost = document.createElement('li');
     liPost.classList.add('justify-content-between', 'list-group-item', 'd-flex', 'align-items-start', 'border-0');
     liPost.innerHTML = `
-                      <a href="${itemLink}" class="text-decoration-none fw-bold text-dark" data-id="${localId}">${itemTitle}</a>
+                      <a href="${itemLink}" class="text-decoration-none ${fontWeigth} text-dark" data-id="${localId}">${itemTitle}</a>
                       <button type="button" class="btn btn-secondary" data-id="${localId}" data-bs-toggle="modal" data-bs-target="#modal">Просмотр</button>               
     `;
     ul.prepend(liPost);
@@ -80,8 +83,8 @@ const parsePosts = (state) => {
   posts.prepend(divPosts);
 };
 
-const render = (state, elements) => {
-  switch (state.inputUrlForm.state) {
+const render = (state, elements) => (path, value) => {
+  switch (value) {
     case 'invalid':
       makeStatus('invalid', state, elements);
       break;
@@ -89,17 +92,32 @@ const render = (state, elements) => {
     case 'feeding':
       makeStatus('feeding', state, elements);
       break;
-    case 'parseComplete': {
+    case 'parseComplete':
       parseFeeds(state);
       parsePosts(state);
       makeStatus('success', state, elements);
       break;
-    }
+
     case 'updating': {
       const posts = document.querySelector('.posts');
       const ul = posts.querySelector('ul');
       ul.innerHTML = '';
       renderLi(ul, state);
+      break;
+    }
+    case 'opened': {
+      const propByPath = path.split('.').slice(0, -1).reduce((acc, cur) => acc?.[cur], state);
+      const openedId = propByPath.localId;
+      const aById = document.querySelector(`a[data-id="${openedId}"]`);
+      aById.classList.remove('fw-bold');
+      aById.classList.add('fw-normal');
+      const modaltitle = document.querySelector('.modal-title');
+      const modalBody = document.querySelector('.modal-body');
+      const ReadButton = document.querySelector('#read');
+      const openRssById = state.active.rss.find((item) => item.localId === openedId);
+      modaltitle.textContent = openRssById.itemTitle;
+      modalBody.innerHTML = openRssById.itemDescription;
+      ReadButton.setAttribute('onclick', `window.location.href = "${openRssById.itemLink}"`);
       break;
     }
     default:

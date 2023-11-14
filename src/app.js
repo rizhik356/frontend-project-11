@@ -42,11 +42,7 @@ const app = () => {
     },
   };
 
-  const watchedState = onChange(state, (path) => {
-    if (path === 'inputUrlForm.state') {
-      render(state, elements);
-    }
-  });
+  const watchedState = onChange(state, render(state, elements));
 
   setLocale({
     mixed: {
@@ -127,6 +123,7 @@ const app = () => {
   };
 
   const updateRSS = (link) => {
+    watchedState.inputUrlForm.state = 'beginUpdating';
     axios.get(allOrigins(link))
       .then((response) => stringParseToHTML(response.data.contents))
       .then((html) => {
@@ -140,6 +137,7 @@ const app = () => {
         });
         if (filter.length > 0) {
           filter.reverse().forEach((item) => {
+            watchedState.active.localId += 1;
             const itemTitle = item.querySelector('title').textContent;
             const itemDescription = item.querySelector('description').textContent;
             const itemLink = item.querySelector('link').textContent;
@@ -163,7 +161,7 @@ const app = () => {
       .catch((err) => {
         console.log(err);
       })
-      .finally(() => setTimeout(updateRSS, 1000, link));
+      .finally(() => setTimeout(updateRSS, 5000, link));
   };
 
   const getHTML = (data) => axios.get(allOrigins(data))
@@ -176,7 +174,6 @@ const app = () => {
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
     watchedState.inputUrlForm.state = 'feeding';
-    watchedState.inputUrlForm.state = [];
     const formData = new FormData(e.target);
     const data = formData.get('url');
     validation(data)
@@ -187,11 +184,15 @@ const app = () => {
         watchedState.inputUrlForm.state = 'invalid';
       });
   });
-  /* elements.posts.addEventListener('click', (e) => {
-    e.preventDefault();
-    const targetId = Number(e.target.dataset.id);
-    const findRssById = watchedState.uiState.modal.find((rssById) => rssById.localId === targetId);
-    findRssById.state = 'opened';
-  }); */
+  elements.posts.addEventListener('click', (e) => {
+    if (Object.hasOwn(e.target.dataset, 'id')) {
+      const targetId = Number(e.target.dataset.id);
+      const findRssById = watchedState.uiState.modal
+        .find((rssById) => rssById.localId === targetId);
+      findRssById.state = 'opened';
+    }
+  });
 };
 export default app;
+
+// http://lorem-rss.herokuapp.com/feed?unit=second
