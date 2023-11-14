@@ -8,7 +8,7 @@ const renderLi = (ul, state) => {
     const liPost = document.createElement('li');
     liPost.classList.add('justify-content-between', 'list-group-item', 'd-flex', 'align-items-start', 'border-0');
     liPost.innerHTML = `
-                      <a href="${itemLink}" class="text-decoration-none ${fontWeigth} text-dark" data-id="${localId}">${itemTitle}</a>
+                      <a href="${itemLink}" target="_blank" class="text-decoration-none ${fontWeigth} text-dark" data-id="${localId}">${itemTitle}</a>
                       <button type="button" class="btn btn-secondary" data-id="${localId}" data-bs-toggle="modal" data-bs-target="#modal">Просмотр</button>               
     `;
     ul.prepend(liPost);
