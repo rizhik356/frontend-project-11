@@ -100,14 +100,11 @@ const app = () => {
       const HTMLItem = html.querySelectorAll('item');
       HTMLItem.forEach((item) => {
         watchedState.active.localId += 1;
-        const itemTitle = item.querySelector('title').textContent;
-        const itemDescription = item.querySelector('description').textContent;
-        const itemLink = item.querySelector('link').textContent;
 
         HTMLData.rss.unshift({
-          itemTitle,
-          itemDescription,
-          itemLink,
+          itemTitle: item.querySelector('title').textContent,
+          itemDescription: item.querySelector('description').textContent,
+          itemLink: item.querySelector('link').textContent,
           id: watchedState.active.activeId,
           localId: watchedState.active.localId,
         });
@@ -130,37 +127,25 @@ const app = () => {
         const feedLink = watchedState.active.feed.find((feed) => feed.link === link);
         const feedId = watchedState.active.rss.filter((post) => post.id === feedLink.id);
         const HTMLItem = Array.from(html.querySelectorAll('item'));
-        const filter = HTMLItem.filter((item) => {
-          const itemTitle = item.querySelector('title').textContent;
-          const postsTitle = feedId.map((post) => post.itemTitle);
-          return !postsTitle.includes(itemTitle);
-        });
+        const filter = HTMLItem.filter((item) => !feedId.map((post) => post.itemTitle)
+          .includes(item.querySelector('title').textContent));
         if (filter.length > 0) {
           filter.reverse().forEach((item) => {
             watchedState.active.localId += 1;
-            const itemTitle = item.querySelector('title').textContent;
-            const itemDescription = item.querySelector('description').textContent;
-            const itemLink = item.querySelector('link').textContent;
-            const filterData = {
-              itemTitle,
-              itemDescription,
-              itemLink,
+            watchedState.active.rss.push({
+              itemTitle: item.querySelector('title').textContent,
+              itemDescription: item.querySelector('description').textContent,
+              itemLink: item.querySelector('link').textContent,
               id: watchedState.active.activeId,
               localId: watchedState.active.localId,
-            };
-            watchedState.active.rss.push(filterData);
-            watchedState.uiState.modal.push({
-              localId: watchedState.active.localId,
-              state: 'default',
             });
+            watchedState.uiState.modal.push({ localId: watchedState.active.localId, state: 'default' });
           });
           watchedState.inputUrlForm.state = 'updating';
         }
         return filter;
       })
-      .catch((err) => {
-        console.log(err);
-      })
+      .catch((console.log))
       .finally(() => setTimeout(updateRSS, 5000, link));
   };
 

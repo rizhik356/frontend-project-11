@@ -8,6 +8,16 @@ export default {
         rssError: 'Ресурс не содержит валидный RSS',
       },
       status: 'RSS успешно загружен',
+      loading: 'Загрузка...',
+    },
+    modal: {
+      close: 'Закрыть',
+      continueReading: 'Читать полностью',
+      open: 'Просмотр',
+    },
+    interface: {
+      feeds: 'Фиды',
+      posts: 'Посты',
     },
   },
 };

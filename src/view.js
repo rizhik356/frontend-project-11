@@ -82,6 +82,28 @@ const parsePosts = (state) => {
   posts.prepend(divPosts);
 };
 
+const getIdByPath = (state, path) => {
+  const propByPath = path.split('.').slice(0, -1).reduce((acc, cur) => acc?.[cur], state);
+  const openedId = propByPath.localId;
+  return openedId;
+};
+
+const makeOpened = (openedId) => {
+  const aById = document.querySelector(`a[data-id="${openedId}"]`);
+  aById.classList.remove('fw-bold');
+  aById.classList.add('fw-normal', 'text-secondary');
+};
+
+const makeModal = (state, openedId) => {
+  const modaltitle = document.querySelector('.modal-title');
+  const modalBody = document.querySelector('.modal-body');
+  const ReadButton = document.querySelector('.full-aricle');
+  const openRssById = state.active.rss.find((item) => item.localId === openedId);
+  modaltitle.textContent = openRssById.itemTitle;
+  modalBody.innerHTML = openRssById.itemDescription;
+  ReadButton.setAttribute('href', openRssById.itemLink);
+  ReadButton.textContent = 'Читать полностью';
+};
 const render = (state, elements) => (path, value) => {
   switch (value) {
     case 'invalid':
@@ -105,18 +127,9 @@ const render = (state, elements) => (path, value) => {
       break;
     }
     case 'opened': {
-      const propByPath = path.split('.').slice(0, -1).reduce((acc, cur) => acc?.[cur], state);
-      const openedId = propByPath.localId;
-      const aById = document.querySelector(`a[data-id="${openedId}"]`);
-      aById.classList.remove('fw-bold');
-      aById.classList.add('fw-normal', 'text-secondary');
-      const modaltitle = document.querySelector('.modal-title');
-      const modalBody = document.querySelector('.modal-body');
-      const ReadButton = document.querySelector('#read');
-      const openRssById = state.active.rss.find((item) => item.localId === openedId);
-      modaltitle.textContent = openRssById.itemTitle;
-      modalBody.innerHTML = openRssById.itemDescription;
-      ReadButton.setAttribute('onclick', `window.location.href = "${openRssById.itemLink}"`);
+      const id = getIdByPath(state, path);
+      makeOpened(id);
+      makeModal(state, id);
       break;
     }
     default:
