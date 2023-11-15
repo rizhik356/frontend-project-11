@@ -14,7 +14,7 @@ const renderLi = (ul, state) => {
   });
 };
 
-const makeStatus = (stateStatus, state, elements) => {
+const makeStatus = (stateStatus, state, elements, i18nextInstance) => {
   const feedback = document.querySelector('.feedback');
   const [err] = state.errors;
   feedback.classList.remove('text-succes', 'text-danger', 'text-light');
@@ -27,27 +27,27 @@ const makeStatus = (stateStatus, state, elements) => {
     case 'feeding':
       elements.formInput.classList.remove('is-invalid');
       feedback.classList.add('text-light');
-      feedback.innerHTML = 'Идет загрузка...';
+      feedback.innerHTML = i18nextInstance.t('messages.loading');
       break;
     case 'success':
       elements.formInput.classList.remove('is-invalid');
       elements.formInput.focus();
       feedback.classList.remove('text-danger', 'text-light');
       feedback.classList.add('text-success');
-      feedback.innerHTML = state.status;
+      feedback.innerHTML = i18nextInstance.t('messages.statusOk');
       elements.form.reset();
       break;
     default:
       throw new Error(`Invalid status ${stateStatus}`);
   }
 };
-const parseFeeds = (state, elements) => {
+const parseFeeds = (state, elements, i18nextInstance) => {
   const { feeds } = elements;
   const divFeeds = feeds.querySelector('.card') ?? document.createElement('div');
   divFeeds.classList.add('border-0', 'card');
   divFeeds.innerHTML = `
     <div class="card-body">
-    <div class="card-title text-end h4">Фиды</div>
+    <div class="card-title text-end h4">${i18nextInstance.t('interface.feeds')}</div>
 `;
   feeds.prepend(divFeeds);
   const newUl = document.createElement('ul');
@@ -65,13 +65,13 @@ const parseFeeds = (state, elements) => {
   divFeeds.append(ul);
 };
 
-const parsePosts = (state, elements) => {
+const parsePosts = (state, elements, i18nextInstance) => {
   const { posts } = elements;
   const divPosts = posts.querySelector('.card') ?? document.createElement('div');
   divPosts.classList.add('border-0', 'card');
   divPosts.innerHTML = `
         <div class="card-body">
-        <div class="card-title h4">Посты</div>
+        <div class="card-title h4">${i18nextInstance.t('interface.posts')}</div>
     `;
   const newUlPost = document.createElement('ul');
   newUlPost.classList.add('list-group');
@@ -93,7 +93,7 @@ const makeOpened = (openedId) => {
   aById.classList.add('fw-normal', 'text-secondary');
 };
 
-const makeModal = (state, openedId) => {
+const makeModal = (state, openedId, i18nextInstance) => {
   const modaltitle = document.querySelector('.modal-title');
   const modalBody = document.querySelector('.modal-body');
   const ReadButton = document.querySelector('.full-aricle');
@@ -101,21 +101,21 @@ const makeModal = (state, openedId) => {
   modaltitle.textContent = openRssById.itemTitle;
   modalBody.innerHTML = openRssById.itemDescription;
   ReadButton.setAttribute('href', openRssById.itemLink);
-  ReadButton.textContent = 'Читать полностью';
+  ReadButton.textContent = i18nextInstance.t('modal.continueReading');
 };
-const render = (state, elements) => (path, value) => {
+const render = (state, elements, i18nextInstance) => (path, value) => {
   switch (value) {
     case 'invalid':
-      makeStatus('invalid', state, elements);
+      makeStatus('invalid', state, elements, i18nextInstance);
       break;
 
     case 'feeding':
-      makeStatus('feeding', state, elements);
+      makeStatus('feeding', state, elements, i18nextInstance);
       break;
     case 'parseComplete':
-      parseFeeds(state, elements);
-      parsePosts(state, elements);
-      makeStatus('success', state, elements);
+      parseFeeds(state, elements, i18nextInstance);
+      parsePosts(state, elements, i18nextInstance);
+      makeStatus('success', state, elements, i18nextInstance);
       break;
 
     case 'updating': {
@@ -126,7 +126,7 @@ const render = (state, elements) => (path, value) => {
     }
     case 'opened': {
       makeOpened(getIdByPath(state, path));
-      makeModal(state, getIdByPath(state, path));
+      makeModal(state, getIdByPath(state, path), i18nextInstance);
       break;
     }
     default:

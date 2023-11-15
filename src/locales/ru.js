@@ -7,7 +7,7 @@ export default {
         networkError: 'Ошибка сети',
         rssError: 'Ресурс не содержит валидный RSS',
       },
-      status: 'RSS успешно загружен',
+      statusOk: 'RSS успешно загружен',
       loading: 'Загрузка...',
     },
     modal: {

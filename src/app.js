@@ -1,22 +1,13 @@
 import 'bootstrap';
 import * as yup from 'yup';
 import onChange from 'on-change';
-import i18next from 'i18next';
 import { setLocale } from 'yup';
 import axios from 'axios';
 import render from './view';
-import resources from './locales/index';
-
-const i18nextInstance = i18next.createInstance();
-i18nextInstance.init({
-  lng: 'ru',
-  debug: true,
-  resources,
-});
 
 const allOrigins = (url) => `https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`;
 
-const app = () => {
+const app = (i18nextInstance) => {
   const elements = {
     formInput: document.querySelector('#rssInput'),
     form: document.querySelector('.rss-form'),
@@ -31,7 +22,6 @@ const app = () => {
       feeds: [],
     },
     errors: [],
-    status: i18nextInstance.t('messages.status'),
     active: {
       activeId: 0,
       feed: [],
@@ -43,7 +33,7 @@ const app = () => {
     },
   };
 
-  const watchedState = onChange(state, render(state, elements));
+  const watchedState = onChange(state, render(state, elements, i18nextInstance));
 
   setLocale({
     mixed: {
