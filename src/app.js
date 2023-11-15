@@ -82,40 +82,40 @@ const app = () => {
     const parse = new DOMParser();
     return parse.parseFromString(str, 'text/xml');
   };
+
+  const breakHTMLIntoPosts = (html) => {
+    html.forEach((item) => {
+      watchedState.active.localId += 1;
+      watchedState.active.rss.push({
+        itemTitle: item.querySelector('title').textContent,
+        itemDescription: item.querySelector('description').textContent,
+        itemLink: item.querySelector('link').textContent,
+        id: watchedState.active.activeId,
+        localId: watchedState.active.localId,
+      });
+      watchedState.uiState.modal.push({
+        localId: watchedState.active.localId,
+        state: 'default',
+      });
+    });
+  };
+
   const parseHTMLtoData = (html, data) => {
-    const HTMLData = {
-      feed: {},
-      rss: [],
-    };
     if (html.querySelector('rss') === null) {
       watchedState.errors.push(i18nextInstance.t('messages.errors.rssError'));
       watchedState.inputUrlForm.state = 'invalid';
       throw new Error();
     } else {
       watchedState.active.activeId += 1;
-      HTMLData.feed.feedTitle = html.querySelector('title').textContent;
-      HTMLData.feed.feedDescription = html.querySelector('description').textContent;
-      HTMLData.feed.id = watchedState.active.activeId;
-      HTMLData.feed.link = data;
+      watchedState.active.feed.push({
+        feedTitle: html.querySelector('title').textContent,
+        feedDescription: html.querySelector('description').textContent,
+        id: watchedState.active.activeId,
+        link: data,
+      });
 
       const HTMLItem = html.querySelectorAll('item');
-      HTMLItem.forEach((item) => {
-        watchedState.active.localId += 1;
-
-        HTMLData.rss.unshift({
-          itemTitle: item.querySelector('title').textContent,
-          itemDescription: item.querySelector('description').textContent,
-          itemLink: item.querySelector('link').textContent,
-          id: watchedState.active.activeId,
-          localId: watchedState.active.localId,
-        });
-        watchedState.uiState.modal.push({
-          localId: watchedState.active.localId,
-          state: 'default',
-        });
-      });
-      watchedState.active.feed.push(HTMLData.feed);
-      watchedState.active.rss = [...watchedState.active.rss, ...HTMLData.rss];
+      breakHTMLIntoPosts(Array.from(HTMLItem).reverse());
       watchedState.inputUrlForm.state = 'parseComplete';
     }
   };
@@ -132,17 +132,7 @@ const app = () => {
           .filter((item) => !feedId.map((post) => post.itemTitle)
             .includes(item.querySelector('title').textContent));
         if (filter.length > 0) {
-          filter.reverse().forEach((item) => {
-            watchedState.active.localId += 1;
-            watchedState.active.rss.push({
-              itemTitle: item.querySelector('title').textContent,
-              itemDescription: item.querySelector('description').textContent,
-              itemLink: item.querySelector('link').textContent,
-              id: watchedState.active.activeId,
-              localId: watchedState.active.localId,
-            });
-            watchedState.uiState.modal.push({ localId: watchedState.active.localId, state: 'default' });
-          });
+          breakHTMLIntoPosts(filter.reverse());
           watchedState.inputUrlForm.state = 'updating';
         }
         return filter;
