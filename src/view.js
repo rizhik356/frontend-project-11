@@ -1,4 +1,6 @@
 const renderLi = (ul, state) => {
+  const newUl = ul;
+  newUl.innerHTML = '';
   state.active.rss.forEach(({
     itemTitle, itemLink, localId,
   }) => {
@@ -10,7 +12,7 @@ const renderLi = (ul, state) => {
                       <a href="${itemLink}" target="_blank" class="${fontWeigth}" data-id="${localId}">${itemTitle}</a>
                       <button type="button" class="btn btn-secondary" data-id="${localId}" data-bs-toggle="modal" data-bs-target="#modal">Просмотр</button>               
     `;
-    ul.prepend(liPost);
+    newUl.prepend(liPost);
   });
 };
 
@@ -120,7 +122,6 @@ const render = (state, elements, i18nextInstance) => (path, value) => {
 
     case 'updating': {
       const ul = elements.posts.querySelector('ul');
-      ul.innerHTML = '';
       renderLi(ul, state);
       break;
     }
