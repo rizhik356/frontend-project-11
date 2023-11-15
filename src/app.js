@@ -7,19 +7,91 @@ import render from './view';
 
 const allOrigins = (url) => `https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`;
 
-const app = (i18nextInstance) => {
-  const elements = {
-    formInput: document.querySelector('#rssInput'),
-    form: document.querySelector('.rss-form'),
-    posts: document.querySelector('.posts'),
-    feeds: document.querySelector('.feeds'),
-  };
+const elements = {
+  formInput: document.querySelector('#rssInput'),
+  form: document.querySelector('.rss-form'),
+  posts: document.querySelector('.posts'),
+  feeds: document.querySelector('.feeds'),
+};
 
+const stringParseToHTML = (str) => {
+  const parse = new DOMParser();
+  return parse.parseFromString(str, 'text/xml');
+};
+
+const breakHTMLIntoPosts = (html, watchedState) => {
+  html.forEach((item) => {
+    const newWatchedState = watchedState;
+    newWatchedState.active.localId += 1;
+    watchedState.active.rss.push({
+      itemTitle: item.querySelector('title').textContent,
+      itemDescription: item.querySelector('description').textContent,
+      itemLink: item.querySelector('link').textContent,
+      id: watchedState.active.activeId,
+      localId: watchedState.active.localId,
+    });
+    watchedState.uiState.modal.push({
+      localId: watchedState.active.localId,
+      state: 'default',
+    });
+  });
+};
+
+const parseHTMLtoData = (html, data, watchedState, i18nextInstance) => {
+  const newWatchedState = watchedState;
+  if (html.querySelector('rss') === null) {
+    newWatchedState.errors.push(i18nextInstance.t('messages.errors.rssError'));
+    newWatchedState.inputUrlForm.state = 'invalid';
+    throw new Error();
+  } else {
+    newWatchedState.active.activeId += 1;
+    watchedState.active.feed.push({
+      feedTitle: html.querySelector('title').textContent,
+      feedDescription: html.querySelector('description').textContent,
+      id: watchedState.active.activeId,
+      link: data,
+    });
+
+    const HTMLItem = html.querySelectorAll('item');
+    breakHTMLIntoPosts(Array.from(HTMLItem).reverse(), watchedState);
+    newWatchedState.inputUrlForm.state = 'parseComplete';
+  }
+};
+
+const updateRSS = (link, watchedState) => {
+  const newWatchedState = watchedState;
+  newWatchedState.inputUrlForm.state = 'beginUpdating';
+  axios.get(allOrigins(link))
+    .then((response) => stringParseToHTML(response.data.contents))
+    .then((html) => {
+      const feedId = watchedState.active.rss
+        .filter((post) => post.id === watchedState.active.feed
+          .find((feed) => feed.link === link).id);
+      const filter = Array.from(html.querySelectorAll('item'))
+        .filter((item) => !feedId.map((post) => post.itemTitle)
+          .includes(item.querySelector('title').textContent));
+      if (filter.length > 0) {
+        breakHTMLIntoPosts(filter.reverse(), watchedState);
+        newWatchedState.inputUrlForm.state = 'updating';
+      }
+      return filter;
+    })
+    .catch((console.log))
+    .finally(() => setTimeout(updateRSS, 5000, link, watchedState));
+};
+
+const getHTML = (data, watchedState, i18nextInstance) => axios.get(allOrigins(data))
+  .then((response) => stringParseToHTML(response.data.contents))
+  .then((html) => parseHTMLtoData(html, data, watchedState, i18nextInstance))
+  .catch((err) => {
+    throw new Error(err);
+  });
+
+const app = (i18nextInstance) => {
   const state = {
     inputUrlForm: {
       state: '',
-      inputValue: '',
-      feeds: [],
+      feedsUrl: [],
     },
     errors: [],
     active: {
@@ -52,12 +124,12 @@ const app = (i18nextInstance) => {
 
   const validation = (url) => schema.validate({ url })
     .then(() => {
-      watchedState.inputUrlForm.feeds.push(url);
+      watchedState.inputUrlForm.feedsUrl.push(url);
       schema = yup.object().shape({
         url: yup.string()
           .required()
           .url()
-          .notOneOf(watchedState.inputUrlForm.feeds),
+          .notOneOf(watchedState.inputUrlForm.feedsUrl),
       });
       watchedState.errors = [];
       return url;
@@ -68,94 +140,24 @@ const app = (i18nextInstance) => {
       watchedState.inputUrlForm.state = 'invalid';
       throw new Error(err.errors);
     });
-  const stringParseToHTML = (str) => {
-    const parse = new DOMParser();
-    return parse.parseFromString(str, 'text/xml');
-  };
-
-  const breakHTMLIntoPosts = (html) => {
-    html.forEach((item) => {
-      watchedState.active.localId += 1;
-      watchedState.active.rss.push({
-        itemTitle: item.querySelector('title').textContent,
-        itemDescription: item.querySelector('description').textContent,
-        itemLink: item.querySelector('link').textContent,
-        id: watchedState.active.activeId,
-        localId: watchedState.active.localId,
-      });
-      watchedState.uiState.modal.push({
-        localId: watchedState.active.localId,
-        state: 'default',
-      });
-    });
-  };
-
-  const parseHTMLtoData = (html, data) => {
-    if (html.querySelector('rss') === null) {
-      watchedState.errors.push(i18nextInstance.t('messages.errors.rssError'));
-      watchedState.inputUrlForm.state = 'invalid';
-      throw new Error();
-    } else {
-      watchedState.active.activeId += 1;
-      watchedState.active.feed.push({
-        feedTitle: html.querySelector('title').textContent,
-        feedDescription: html.querySelector('description').textContent,
-        id: watchedState.active.activeId,
-        link: data,
-      });
-
-      const HTMLItem = html.querySelectorAll('item');
-      breakHTMLIntoPosts(Array.from(HTMLItem).reverse());
-      watchedState.inputUrlForm.state = 'parseComplete';
-    }
-  };
-
-  const updateRSS = (link) => {
-    watchedState.inputUrlForm.state = 'beginUpdating';
-    axios.get(allOrigins(link))
-      .then((response) => stringParseToHTML(response.data.contents))
-      .then((html) => {
-        const feedId = watchedState.active.rss
-          .filter((post) => post.id === watchedState.active.feed
-            .find((feed) => feed.link === link).id);
-        const filter = Array.from(html.querySelectorAll('item'))
-          .filter((item) => !feedId.map((post) => post.itemTitle)
-            .includes(item.querySelector('title').textContent));
-        if (filter.length > 0) {
-          breakHTMLIntoPosts(filter.reverse());
-          watchedState.inputUrlForm.state = 'updating';
-        }
-        return filter;
-      })
-      .catch((console.log))
-      .finally(() => setTimeout(updateRSS, 5000, link));
-  };
-
-  const getHTML = (data) => axios.get(allOrigins(data))
-    .then((response) => stringParseToHTML(response.data.contents))
-    .then((html) => parseHTMLtoData(html, data))
-    .catch((err) => {
-      throw new Error(err);
-    });
 
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
     watchedState.inputUrlForm.state = 'feeding';
-    const formData = new FormData(e.target);
-    const data = formData.get('url');
+    const data = new FormData(e.target).get('url');
     validation(data)
-      .then((newData) => getHTML(newData))
-      .then(() => updateRSS(data))
-      .catch(() => {
+      .then((newData) => getHTML(newData, watchedState, i18nextInstance))
+      .then(() => updateRSS(data, watchedState))
+      .catch((err) => {
         watchedState.errors.push(i18nextInstance.t('messages.errors.networkError'));
         watchedState.inputUrlForm.state = 'invalid';
+        console.log(err);
       });
   });
   elements.posts.addEventListener('click', (e) => {
     if (Object.hasOwn(e.target.dataset, 'id')) {
-      const targetId = Number(e.target.dataset.id);
       const findRssById = watchedState.uiState.modal
-        .find((rssById) => rssById.localId === targetId);
+        .find((rssById) => rssById.localId === Number(e.target.dataset.id));
       findRssById.state = 'opened';
     }
   });
