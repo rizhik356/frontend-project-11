@@ -49,7 +49,7 @@ const app = (i18nextInstance) => {
       .notOneOf([]),
   });
 
-  const validation = (url) => schema.validate({ url })
+  const isValid = (url) => schema.validate({ url })
     .then(() => {
       watchedState.inputUrlForm.feedsUrl.push(url);
       schema = yup.object().shape({
@@ -139,7 +139,7 @@ const app = (i18nextInstance) => {
     e.preventDefault();
     watchedState.inputUrlForm.state = 'feeding';
     const data = new FormData(e.target).get('url');
-    validation(data)
+    isValid(data)
       .then((newData) => getHTML(newData))
       .then(() => updateRSS(data))
       .catch(() => {

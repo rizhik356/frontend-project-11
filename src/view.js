@@ -1,4 +1,4 @@
-const renderLi = (ul, state) => {
+const renderLi = (ul, state, i18nextInstance) => {
   const newUl = ul;
   newUl.innerHTML = '';
   state.active.rss.forEach(({
@@ -6,12 +6,25 @@ const renderLi = (ul, state) => {
   }) => {
     const uiStateById = (state.uiState.modal.find((item) => item.localId === localId)).state;
     const fontWeigth = uiStateById === 'default' ? 'fw-bold' : 'fw-normal text-secondary';
+
     const liPost = document.createElement('li');
+    const a = document.createElement('a');
+    const button = document.createElement('button');
     liPost.classList.add('justify-content-between', 'list-group-item', 'd-flex', 'align-items-start', 'border-0');
-    liPost.innerHTML = `
-                      <a href="${itemLink}" target="_blank" class="${fontWeigth}" data-id="${localId}">${itemTitle}</a>
-                      <button type="button" class="btn btn-secondary" data-id="${localId}" data-bs-toggle="modal" data-bs-target="#modal">Просмотр</button>               
-    `;
+    a.setAttribute('href', `${itemLink}`);
+    a.setAttribute('target', '_blank');
+    a.setAttribute('class', `${fontWeigth}`);
+    a.setAttribute('data-id', `${localId}`);
+    a.textContent = `${itemTitle}`;
+    liPost.prepend(a);
+
+    button.setAttribute('type', 'button');
+    button.setAttribute('class', 'btn btn-secondary');
+    button.setAttribute('data-id', `${localId}`);
+    button.setAttribute('data-bs-toggle', 'modal');
+    button.setAttribute('data-bs-target', '#modal');
+    button.textContent = `${i18nextInstance.t('modal.open')}`;
+    liPost.append(button);
     newUl.prepend(liPost);
   });
 };
@@ -24,19 +37,19 @@ const makeStatus = (stateStatus, state, elements, i18nextInstance) => {
     case 'invalid':
       elements.formInput.classList.add('is-invalid');
       feedback.classList.add('text-danger');
-      feedback.innerHTML = err;
+      feedback.textContent = err;
       break;
     case 'feeding':
       elements.formInput.classList.remove('is-invalid');
       feedback.classList.add('text-light');
-      feedback.innerHTML = i18nextInstance.t('messages.loading');
+      feedback.textContent = i18nextInstance.t('messages.loading');
       break;
     case 'success':
       elements.formInput.classList.remove('is-invalid');
       elements.formInput.focus();
       feedback.classList.remove('text-danger', 'text-light');
       feedback.classList.add('text-success');
-      feedback.innerHTML = i18nextInstance.t('messages.statusOk');
+      feedback.textContent = i18nextInstance.t('messages.statusOk');
       elements.form.reset();
       break;
     default:
@@ -46,22 +59,32 @@ const makeStatus = (stateStatus, state, elements, i18nextInstance) => {
 const parseFeeds = (state, elements, i18nextInstance) => {
   const { feeds } = elements;
   const divFeeds = feeds.querySelector('.card') ?? document.createElement('div');
+  divFeeds.innerHTML = '';
   divFeeds.classList.add('border-0', 'card');
-  divFeeds.innerHTML = `
-    <div class="card-body">
-    <div class="card-title text-end h4">${i18nextInstance.t('interface.feeds')}</div>
-`;
+  const divClassCardBody = document.createElement('div');
+  divClassCardBody.classList.add('card-body');
+  divFeeds.prepend(divClassCardBody);
+  const divClassCardTitle = document.createElement('div');
+  divClassCardTitle.classList.add('card-title', 'text-end', 'h4');
+  divClassCardTitle.textContent = `${i18nextInstance.t('interface.feeds')}`;
+  divFeeds.append(divClassCardTitle);
   feeds.prepend(divFeeds);
+
   const newUl = document.createElement('ul');
   newUl.classList.add('list-group', 'text-end');
   const ul = feeds.querySelector('ul') ?? newUl;
+  ul.innerHTML = '';
   state.active.feed.forEach(({ feedTitle, feedDescription }) => {
     const li = document.createElement('li');
+    const h3 = document.createElement('h3');
+    const p = document.createElement('p');
     li.classList.add('list-group-item', 'border-0');
-    li.innerHTML = `
-    <h3 class="h6 m-0">${feedTitle}</h3>
-    <p class="small text-black-50 m-0">${feedDescription}</p>
-    `;
+    h3.classList.add('h6', 'm-0');
+    h3.textContent = `${feedTitle}`;
+    li.prepend(h3);
+    p.classList.add('small', 'text-black-50', 'm-0');
+    p.textContent = `${feedDescription}`;
+    li.append(p);
     ul.prepend(li);
   });
   divFeeds.append(ul);
@@ -70,15 +93,20 @@ const parseFeeds = (state, elements, i18nextInstance) => {
 const parsePosts = (state, elements, i18nextInstance) => {
   const { posts } = elements;
   const divPosts = posts.querySelector('.card') ?? document.createElement('div');
+  divPosts.innerHTML = '';
   divPosts.classList.add('border-0', 'card');
-  divPosts.innerHTML = `
-        <div class="card-body">
-        <div class="card-title h4">${i18nextInstance.t('interface.posts')}</div>
-    `;
+  const divClassCardBody = document.createElement('div');
+  const divClassCardTitle = document.createElement('div');
+  divClassCardBody.classList.add('card-body');
+  divPosts.prepend(divClassCardBody);
+  divClassCardTitle.classList.add('card-title', 'h4');
+  divClassCardTitle.textContent = `${i18nextInstance.t('interface.posts')}`;
+  divPosts.append(divClassCardTitle);
+
   const newUlPost = document.createElement('ul');
   newUlPost.classList.add('list-group');
   const ulPost = divPosts.querySelector('ul') ?? newUlPost;
-  renderLi(ulPost, state);
+  renderLi(ulPost, state, i18nextInstance);
   divPosts.append(ulPost);
   posts.prepend(divPosts);
 };
@@ -122,7 +150,7 @@ const render = (state, elements, i18nextInstance) => (path, value) => {
 
     case 'updating': {
       const ul = elements.posts.querySelector('ul');
-      renderLi(ul, state);
+      renderLi(ul, state, i18nextInstance);
       break;
     }
     case 'opened': {
