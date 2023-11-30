@@ -1,11 +1,9 @@
 import 'bootstrap';
-import * as yup from 'yup';
 import onChange from 'on-change';
-import { setLocale } from 'yup';
-import axios from 'axios';
 import render from './view';
-
-const allOrigins = (url) => `https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`;
+import updateRSS from './sripts/updateRSS';
+import getHTML from './sripts/getHTML';
+import isValid from './sripts/validator';
 
 const elements = {
   formInput: document.querySelector('#rssInput'),
@@ -34,116 +32,15 @@ const app = (i18nextInstance) => {
 
   const watchedState = onChange(state, render(state, elements, i18nextInstance));
 
-  setLocale({
-    mixed: {
-      notOneOf: i18nextInstance.t('messages.errors.copyFeed'),
-    },
-    string: {
-      url: i18nextInstance.t('messages.errors.invalidUrl'),
-    },
-  });
-  let schema = yup.object().shape({
-    url: yup.string()
-      .required()
-      .url()
-      .notOneOf([]),
-  });
-
-  const isValid = (url) => schema.validate({ url })
-    .then(() => {
-      watchedState.inputUrlForm.feedsUrl.push(url);
-      schema = yup.object().shape({
-        url: yup.string()
-          .required()
-          .url()
-          .notOneOf(watchedState.inputUrlForm.feedsUrl),
-      });
-      watchedState.errors = [];
-      return url;
-    })
-    .catch((err) => {
-      watchedState.errors = [];
-      watchedState.errors.push(err.errors);
-      watchedState.inputUrlForm.state = 'invalid';
-      throw new Error(err.errors);
-    });
-
-  const stringParseToHTML = (str) => new DOMParser().parseFromString(str, 'text/xml');
-
-  const breakHTMLIntoPosts = (html) => {
-    html.forEach((item) => {
-      watchedState.active.localId += 1;
-      watchedState.active.rss.push({
-        itemTitle: item.querySelector('title').textContent,
-        itemDescription: item.querySelector('description').textContent,
-        itemLink: item.querySelector('link').textContent,
-        id: watchedState.active.activeId,
-        localId: watchedState.active.localId,
-      });
-      watchedState.uiState.modal.push({
-        localId: watchedState.active.localId,
-        state: 'default',
-      });
-    });
-  };
-
-  const parseHTMLtoData = (html, data) => {
-    if (html.querySelector('rss') === null) {
-      watchedState.errors.push(i18nextInstance.t('messages.errors.rssError'));
-      watchedState.inputUrlForm.state = 'invalid';
-      throw new Error();
-    } else {
-      watchedState.active.activeId += 1;
-      watchedState.active.feed.push({
-        feedTitle: html.querySelector('title').textContent,
-        feedDescription: html.querySelector('description').textContent,
-        id: watchedState.active.activeId,
-        link: data,
-      });
-
-      const HTMLItem = html.querySelectorAll('item');
-      breakHTMLIntoPosts(Array.from(HTMLItem).reverse());
-      watchedState.inputUrlForm.state = 'parseComplete';
-    }
-  };
-
-  const updateRSS = (link) => {
-    watchedState.inputUrlForm.state = 'beginUpdating';
-    axios.get(allOrigins(link))
-      .then((response) => stringParseToHTML(response.data.contents))
-      .then((html) => {
-        const feedId = watchedState.active.rss
-          .filter((post) => post.id === watchedState.active.feed
-            .find((feed) => feed.link === link).id);
-        const filter = Array.from(html.querySelectorAll('item'))
-          .filter((item) => !feedId.map((post) => post.itemTitle)
-            .includes(item.querySelector('title').textContent));
-        if (filter.length > 0) {
-          breakHTMLIntoPosts(filter.reverse());
-          watchedState.inputUrlForm.state = 'updating';
-        }
-        return filter;
-      })
-      .catch((console.log))
-      .finally(() => setTimeout(updateRSS, 5000, link));
-  };
-
-  const getHTML = (data) => axios.get(allOrigins(data))
-    .then((response) => stringParseToHTML(response.data.contents))
-    .then((html) => parseHTMLtoData(html, data))
-    .catch((err) => {
-      throw new Error(err);
-    });
-
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
     watchedState.inputUrlForm.state = 'feeding';
     const data = new FormData(e.target).get('url');
-    isValid(data)
-      .then((newData) => getHTML(newData))
-      .then(() => updateRSS(data))
+    isValid(data, watchedState)
+      .then((newData) => getHTML(newData, i18nextInstance, watchedState))
+      .then(() => updateRSS(data, watchedState))
       .catch(() => {
-        watchedState.errors.push(i18nextInstance.t('messages.errors.networkError'));
+        watchedState.errors.push('networkError');
         watchedState.inputUrlForm.state = 'invalid';
       });
   });

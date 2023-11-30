@@ -8,9 +8,9 @@ const renderLi = (ul, state, i18nextInstance) => {
     const fontWeigth = uiStateById === 'default' ? 'fw-bold' : 'fw-normal text-secondary';
 
     const liPost = document.createElement('li');
-    const a = document.createElement('a');
-    const button = document.createElement('button');
     liPost.classList.add('justify-content-between', 'list-group-item', 'd-flex', 'align-items-start', 'border-0');
+
+    const a = document.createElement('a');
     a.setAttribute('href', `${itemLink}`);
     a.setAttribute('target', '_blank');
     a.setAttribute('class', `${fontWeigth}`);
@@ -18,6 +18,7 @@ const renderLi = (ul, state, i18nextInstance) => {
     a.textContent = `${itemTitle}`;
     liPost.prepend(a);
 
+    const button = document.createElement('button');
     button.setAttribute('type', 'button');
     button.setAttribute('class', 'btn btn-secondary');
     button.setAttribute('data-id', `${localId}`);
@@ -37,7 +38,7 @@ const makeStatus = (stateStatus, state, elements, i18nextInstance) => {
     case 'invalid':
       elements.formInput.classList.add('is-invalid');
       feedback.classList.add('text-danger');
-      feedback.textContent = err;
+      feedback.textContent = i18nextInstance.t(`messages.errors.${err}`);
       break;
     case 'feeding':
       elements.formInput.classList.remove('is-invalid');
@@ -56,8 +57,7 @@ const makeStatus = (stateStatus, state, elements, i18nextInstance) => {
       throw new Error(`Invalid status ${stateStatus}`);
   }
 };
-const parseFeeds = (state, elements, i18nextInstance) => {
-  const { feeds } = elements;
+const parseFeeds = (state, { feeds }, i18nextInstance) => {
   const divFeeds = feeds.querySelector('.card') ?? document.createElement('div');
   divFeeds.innerHTML = '';
   divFeeds.classList.add('border-0', 'card');
