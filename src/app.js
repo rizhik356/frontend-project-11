@@ -10,6 +10,7 @@ const elements = {
   form: document.querySelector('.rss-form'),
   posts: document.querySelector('.posts'),
   feeds: document.querySelector('.feeds'),
+  addButton: document.querySelector('#addButton'),
 };
 
 const app = (i18nextInstance) => {
@@ -19,6 +20,7 @@ const app = (i18nextInstance) => {
       feedsUrl: [],
     },
     errors: [],
+    errorsIdUpdate: [],
     active: {
       activeId: 0,
       feed: [],
@@ -35,9 +37,9 @@ const app = (i18nextInstance) => {
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
     watchedState.inputUrlForm.state = 'feeding';
-    const data = new FormData(e.target).get('url');
+    const data = new FormData(e.target).get('url').trim();
     isValid(data, watchedState)
-      .then((newData) => getHTML(newData, i18nextInstance, watchedState))
+      .then((newData) => getHTML(newData, watchedState))
       .then(() => updateRSS(data, watchedState))
       .catch(() => {
         watchedState.errors.push('networkError');

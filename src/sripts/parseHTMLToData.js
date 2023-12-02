@@ -1,6 +1,6 @@
 import breakHTMLIntoPosts from './breakHTMLIntoPosts';
 
-const parseHTMLtoData = (html, data, i18nextInstance, watchedState) => {
+const parseHTMLtoData = (html, data, watchedState) => {
   if (html.querySelector('rss') === null) {
     watchedState.errors.push('rssError');
     watchedState.inputUrlForm.state = 'invalid';

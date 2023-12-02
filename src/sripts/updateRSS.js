@@ -8,6 +8,7 @@ const updateRSS = (link, watchedState) => {
   axios.get(allOrigins(link))
     .then((response) => stringParseToHTML(response.data.contents))
     .then((html) => {
+      watchedState.errorsIdUpdate = watchedState.errorsIdUpdate.filter((item) => item !== link);
       const feedId = watchedState.active.rss
         .filter((post) => post.id === watchedState.active.feed
           .find((feed) => feed.link === link).id);
@@ -21,7 +22,9 @@ const updateRSS = (link, watchedState) => {
       return filter;
     })
     .catch(() => {
-      throw new Error('Ошибка при обновлении фида');
+      if (!watchedState.errorsIdUpdate.includes(link)) {
+        watchedState.errorsIdUpdate.push(link);
+      }
     })
     .finally(() => setTimeout(updateRSS, 5000, link, watchedState));
 };

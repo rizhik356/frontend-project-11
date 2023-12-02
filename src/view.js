@@ -30,6 +30,51 @@ const renderLi = (ul, state, i18nextInstance) => {
   });
 };
 
+const makeSpinner = (element, color = 'light') => {
+  const span = document.createElement('span');
+  span.className = `spinner-${element} text-${color} spinner-${element}-sm mx-2`;
+  span.setAttribute('role', 'status');
+  span.setAttribute('aria-hidden', 'aria-hidden');
+  return span;
+};
+
+const renderButtonLoading = (elements, i18nextInstance) => {
+  elements.addButton.disabled = true;
+  elements.addButton.textContent = i18nextInstance.t('button.loading');
+  elements.addButton.classList.remove('px-sm-5');
+  elements.addButton.classList.add('px-sm-4');
+  elements.addButton.prepend(makeSpinner('border'));
+};
+
+const renderLiFeeds = (ul, state) => {
+  ul.innerHTML = '';
+  state.active.feed.forEach(({ feedTitle, feedDescription, link }) => {
+    const li = document.createElement('li');
+    const h3 = document.createElement('h3');
+    const p = document.createElement('p');
+    li.classList.add('list-group-item', 'border-0');
+    h3.className = 'h6 m-0';
+    h3.textContent = `${feedTitle}`;
+    if (state.errorsIdUpdate.includes(link)) {
+      h3.classList.add('text-danger');
+      h3.prepend(makeSpinner('border', 'danger'));
+    }
+    li.prepend(h3);
+    p.classList.add('small', 'text-black-50', 'm-0');
+    p.textContent = `${feedDescription}`;
+    li.append(p);
+    ul.prepend(li);
+  });
+};
+
+const renderButtonDefault = (elements, i18nextInstance) => {
+  elements.addButton.disabled = false;
+  elements.addButton.innerHTML = '';
+  elements.addButton.textContent = i18nextInstance.t('button.default');
+  elements.addButton.classList.remove('px-sm-4');
+  elements.addButton.classList.add('px-sm-5');
+};
+
 const makeStatus = (stateStatus, state, elements, i18nextInstance) => {
   const feedback = document.querySelector('.feedback');
   const [err] = state.errors;
@@ -42,8 +87,10 @@ const makeStatus = (stateStatus, state, elements, i18nextInstance) => {
       break;
     case 'feeding':
       elements.formInput.classList.remove('is-invalid');
-      feedback.classList.add('text-light');
-      feedback.textContent = i18nextInstance.t('messages.loading');
+      feedback.textContent = '';
+      feedback.prepend(makeSpinner('grow'));
+      feedback.prepend(makeSpinner('grow'));
+      feedback.prepend(makeSpinner('grow'));
       break;
     case 'success':
       elements.formInput.classList.remove('is-invalid');
@@ -73,20 +120,7 @@ const parseFeeds = (state, { feeds }, i18nextInstance) => {
   const newUl = document.createElement('ul');
   newUl.classList.add('list-group', 'text-end');
   const ul = feeds.querySelector('ul') ?? newUl;
-  ul.innerHTML = '';
-  state.active.feed.forEach(({ feedTitle, feedDescription }) => {
-    const li = document.createElement('li');
-    const h3 = document.createElement('h3');
-    const p = document.createElement('p');
-    li.classList.add('list-group-item', 'border-0');
-    h3.classList.add('h6', 'm-0');
-    h3.textContent = `${feedTitle}`;
-    li.prepend(h3);
-    p.classList.add('small', 'text-black-50', 'm-0');
-    p.textContent = `${feedDescription}`;
-    li.append(p);
-    ul.prepend(li);
-  });
+  renderLiFeeds(ul, state);
   divFeeds.append(ul);
 };
 
@@ -136,19 +170,23 @@ const makeModal = (state, openedId, i18nextInstance) => {
 const render = (state, elements, i18nextInstance) => (path, value) => {
   switch (value) {
     case 'invalid':
+      renderButtonDefault(elements, i18nextInstance);
       makeStatus('invalid', state, elements, i18nextInstance);
       break;
 
     case 'feeding':
       makeStatus('feeding', state, elements, i18nextInstance);
+      renderButtonLoading(elements, i18nextInstance);
       break;
     case 'parseComplete':
+      renderButtonDefault(elements, i18nextInstance);
       parseFeeds(state, elements, i18nextInstance);
       parsePosts(state, elements, i18nextInstance);
       makeStatus('success', state, elements, i18nextInstance);
       break;
 
     case 'updating': {
+      renderButtonDefault(elements, i18nextInstance);
       const ul = elements.posts.querySelector('ul');
       renderLi(ul, state, i18nextInstance);
       break;
@@ -156,6 +194,14 @@ const render = (state, elements, i18nextInstance) => (path, value) => {
     case 'opened': {
       makeOpened(getIdByPath(state, path));
       makeModal(state, getIdByPath(state, path), i18nextInstance);
+      break;
+    }
+    default:
+      break;
+  }
+  switch (path) {
+    case ('errorsIdUpdate'): {
+      parseFeeds(state, elements, i18nextInstance);
       break;
     }
     default:

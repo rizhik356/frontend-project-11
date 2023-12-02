@@ -8,7 +8,10 @@ export default {
         rssError: 'Ресурс не содержит валидный RSS',
       },
       statusOk: 'RSS успешно загружен',
+    },
+    button: {
       loading: 'Загрузка...',
+      default: 'Добавить',
     },
     modal: {
       close: 'Закрыть',
