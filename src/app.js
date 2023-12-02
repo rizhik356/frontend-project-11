@@ -4,14 +4,7 @@ import render from './view';
 import updateRSS from './sripts/updateRSS';
 import getHTML from './sripts/getHTML';
 import isValid from './sripts/validator';
-
-const elements = {
-  formInput: document.querySelector('#rssInput'),
-  form: document.querySelector('.rss-form'),
-  posts: document.querySelector('.posts'),
-  feeds: document.querySelector('.feeds'),
-  addButton: document.querySelector('#addButton'),
-};
+import elements from './elements/elements';
 
 const app = (i18nextInstance) => {
   const state = {

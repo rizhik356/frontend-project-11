@@ -55,10 +55,12 @@ const renderLiFeeds = (ul, state) => {
     li.classList.add('list-group-item', 'border-0');
     h3.className = 'h6 m-0';
     h3.textContent = `${feedTitle}`;
+
     if (state.errorsIdUpdate.includes(link)) {
       h3.classList.add('text-danger');
       h3.prepend(makeSpinner('border', 'danger'));
     }
+
     li.prepend(h3);
     p.classList.add('small', 'text-black-50', 'm-0');
     p.textContent = `${feedDescription}`;
@@ -76,28 +78,27 @@ const renderButtonDefault = (elements, i18nextInstance) => {
 };
 
 const makeStatus = (stateStatus, state, elements, i18nextInstance) => {
-  const feedback = document.querySelector('.feedback');
   const [err] = state.errors;
-  feedback.classList.remove('text-succes', 'text-danger', 'text-light');
+  elements.feedback.classList.remove('text-succes', 'text-danger', 'text-light');
   switch (stateStatus) {
     case 'invalid':
       elements.formInput.classList.add('is-invalid');
-      feedback.classList.add('text-danger');
-      feedback.textContent = i18nextInstance.t(`messages.errors.${err}`);
+      elements.feedback.classList.add('text-danger');
+      elements.feedback.textContent = i18nextInstance.t(`messages.errors.${err}`);
       break;
     case 'feeding':
       elements.formInput.classList.remove('is-invalid');
-      feedback.textContent = '';
-      feedback.prepend(makeSpinner('grow'));
-      feedback.prepend(makeSpinner('grow'));
-      feedback.prepend(makeSpinner('grow'));
+      elements.feedback.textContent = '';
+      elements.feedback.prepend(makeSpinner('grow'));
+      elements.feedback.prepend(makeSpinner('grow'));
+      elements.feedback.prepend(makeSpinner('grow'));
       break;
     case 'success':
       elements.formInput.classList.remove('is-invalid');
       elements.formInput.focus();
-      feedback.classList.remove('text-danger', 'text-light');
-      feedback.classList.add('text-success');
-      feedback.textContent = i18nextInstance.t('messages.statusOk');
+      elements.feedback.classList.remove('text-danger', 'text-light');
+      elements.feedback.classList.add('text-success');
+      elements.feedback.textContent = i18nextInstance.t('messages.statusOk');
       elements.form.reset();
       break;
     default:
@@ -157,16 +158,14 @@ const makeOpened = (openedId) => {
   aById.classList.add('fw-normal', 'text-secondary');
 };
 
-const makeModal = (state, openedId, i18nextInstance) => {
-  const modaltitle = document.querySelector('.modal-title');
-  const modalBody = document.querySelector('.modal-body');
-  const ReadButton = document.querySelector('.full-aricle');
+const makeModal = (state, openedId, i18nextInstance, elements) => {
   const openRssById = state.active.rss.find((item) => item.localId === openedId);
-  modaltitle.textContent = openRssById.itemTitle;
-  modalBody.innerHTML = openRssById.itemDescription;
-  ReadButton.setAttribute('href', openRssById.itemLink);
-  ReadButton.textContent = i18nextInstance.t('modal.continueReading');
+  elements.modalTitle.textContent = openRssById.itemTitle;
+  elements.modalBody.innerHTML = openRssById.itemDescription;
+  elements.readButton.setAttribute('href', openRssById.itemLink);
+  elements.readButton.textContent = i18nextInstance.t('modal.continueReading');
 };
+
 const render = (state, elements, i18nextInstance) => (path, value) => {
   switch (value) {
     case 'invalid':
@@ -193,19 +192,14 @@ const render = (state, elements, i18nextInstance) => (path, value) => {
     }
     case 'opened': {
       makeOpened(getIdByPath(state, path));
-      makeModal(state, getIdByPath(state, path), i18nextInstance);
+      makeModal(state, getIdByPath(state, path), i18nextInstance, elements);
       break;
     }
     default:
       break;
   }
-  switch (path) {
-    case ('errorsIdUpdate'): {
-      parseFeeds(state, elements, i18nextInstance);
-      break;
-    }
-    default:
-      break;
+  if (path === 'errorsIdUpdate') {
+    parseFeeds(state, elements, i18nextInstance);
   }
 };
 
