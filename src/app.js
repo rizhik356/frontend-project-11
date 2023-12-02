@@ -48,5 +48,3 @@ const app = (i18nextInstance) => {
   });
 };
 export default app;
-
-// http://lorem-rss.herokuapp.com/feed?unit=second
